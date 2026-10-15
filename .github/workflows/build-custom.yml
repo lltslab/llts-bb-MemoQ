@@ -1,0 +1,54 @@
+name: Build custom memoQ app
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Download repository code
+        uses: actions/checkout@v4
+
+      - name: Install .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build app
+        run: dotnet build Apps.Memoq/Apps.MemoQ.csproj --configuration Release
+
+      - name: Run work-start tests
+        run: >
+          dotnet test Tests.MemoQ/Tests.MemoQ.csproj
+          --configuration Release
+          --filter "FullyQualifiedName~WorkStartEventMapperTests"
+
+      - name: Prepare app files
+        run: >
+          dotnet publish Apps.Memoq/Apps.MemoQ.csproj
+          --configuration Release
+          --no-self-contained
+          --output publish-work-start
+
+      - name: Create Blackbird ZIP
+        run: |
+          cd publish-work-start
+          zip -r ../llts-bb-MemoQ.zip .
+
+      - name: Save downloadable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: llts-bb-MemoQ-build
+          path: llts-bb-MemoQ.zip
+          if-no-files-found: error
