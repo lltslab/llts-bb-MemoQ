@@ -3,10 +3,11 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<Product>memoQ</Product>
+		<Product>memoQ Work Start OAJ678d6c1c</Product>
+		<PackageId>OAJ678d6c1c.MemoQ.WorkStart</PackageId>
 		<Description>Computer-assisted translation</Description>
-		<Version>1.5.13</Version>
-		<AssemblyName>Apps.MemoQ</AssemblyName>
+		<Version>1.5.14</Version>
+		<AssemblyName>OAJ678d6c1c.MemoQ.WorkStart</AssemblyName>
 		<LangVersion>12</LangVersion>
 	</PropertyGroup>
 	<ItemGroup>
