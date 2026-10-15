@@ -1,4 +1,4 @@
-# Blackbird.io memoQ
+﻿# Blackbird.io memoQ
 
 Blackbird is the new automation backbone for the language technology industry. Blackbird provides enterprise-scale automation and orchestration with a simple no-code/low-code platform. Blackbird enables ambitious organizations to identify, vet and automate as many processes as possible. Not just localization workflows, but any business and IT process. This repository represents an application that is deployable on Blackbird and usable inside the workflow editor.
 
@@ -148,3 +148,11 @@ In the future we can add actions for:
 Feedback to our implementation of memoQ is always very welcome. Reach out to us using the [established channels](https://www.blackbird.io/), or create an issue.
 
 <!-- end docs -->
+
+
+## Custom work-start history action
+
+This fork adds **Project history → Get project work-start events**. It returns
+recorded `WorkStartedOnProject` history entries for a project, optionally filtered
+by document/slice IDs and user ID. Outputs include user ID, document and timestamp.
+See [WORK_START_SETUP.md](WORK_START_SETUP.md) for build, deployment and live-test instructions.
