@@ -6,7 +6,7 @@
 		<Product>memoQ Work Start OAJ678d6c1c</Product>
 		<PackageId>OAJ678d6c1c.MemoQ.WorkStart</PackageId>
 		<Description>Computer-assisted translation</Description>
-		<Version>1.5.15</Version>
+		<Version>1.5.16</Version>
 		<AssemblyName>OAJ678d6c1c.MemoQ.WorkStart</AssemblyName>
 		<LangVersion>12</LangVersion>
 	</PropertyGroup>

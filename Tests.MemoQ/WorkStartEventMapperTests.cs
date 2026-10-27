@@ -24,6 +24,9 @@ public class WorkStartEventMapperTests
         Assert.AreEqual(2, result.Count);
         Assert.AreEqual(early, result.Events[0].StartedAt);
         Assert.AreEqual(DateTimeKind.Unspecified, result.Events[0].StartedAt.Kind);
+        Assert.AreEqual((DateTime?)early.AddMinutes(20), result.Events[0].DeliveredAt);
+        Assert.AreEqual((DateTime?)early.AddMinutes(20), result.Events[1].DeliveredAt);
+        Assert.AreEqual(DateTimeKind.Unspecified, result.Events[0].DeliveredAt!.Value.Kind);
         Assert.AreEqual(project.ToString(), result.Events[0].ProjectId);
         Assert.AreEqual(document.ToString(), result.Events[0].DocumentId);
         Assert.AreEqual(user.ToString(), result.Events[0].UserId);
@@ -62,6 +65,81 @@ public class WorkStartEventMapperTests
         var result = WorkStartEventMapper.Map(Guid.NewGuid(), Array.Empty<DocumentHistoryItemInfo>());
         Assert.AreEqual(0, result.Count);
         Assert.AreEqual(0, result.Events.Count);
+    }
+
+    [TestMethod]
+    public void PairsOnlyWithNextDeliveryForSameDocumentAndUser()
+    {
+        var user = Guid.NewGuid();
+        var document = Guid.NewGuid();
+        var start = new DateTime(2026, 1, 27, 6, 36, 56);
+        var result = WorkStartEventMapper.Map(Guid.NewGuid(), new[]
+        {
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddMinutes(30), user, document),
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddSeconds(-1), user, document),
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddSeconds(1), Guid.NewGuid(), document),
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddSeconds(2), user, Guid.NewGuid()),
+            Item(DocumentHistoryItemType.DocumentReturn, start.AddSeconds(3), user, document),
+            Item(DocumentHistoryItemType.GroupSourcingDocumentDeliver, start.AddSeconds(4), user, document),
+            Item(DocumentHistoryItemType.WorkflowStatusChange, start.AddSeconds(5), user, document),
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddSeconds(91), user, document),
+            Item(DocumentHistoryItemType.WorkStartedOnProject, start, user, document)
+        }, user);
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual((DateTime?)start.AddSeconds(91), result.Events[0].DeliveredAt);
+    }
+
+    [TestMethod]
+    public void ReopenedWorkUsesTheDeliveryFollowingEachStart()
+    {
+        var user = Guid.NewGuid();
+        var document = Guid.NewGuid();
+        var start = new DateTime(2026, 1, 27, 6, 0, 0);
+        var result = WorkStartEventMapper.Map(Guid.NewGuid(), new[]
+        {
+            Item(DocumentHistoryItemType.WorkStartedOnProject, start, user, document),
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddMinutes(5), user, document),
+            Item(DocumentHistoryItemType.WorkStartedOnProject, start.AddMinutes(10), user, document),
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddMinutes(15), user, document),
+            Item(DocumentHistoryItemType.WorkStartedOnProject, start.AddMinutes(20), user, document)
+        });
+        Assert.AreEqual(3, result.Count);
+        Assert.AreEqual((DateTime?)start.AddMinutes(5), result.Events[0].DeliveredAt);
+        Assert.AreEqual((DateTime?)start.AddMinutes(15), result.Events[1].DeliveredAt);
+        Assert.IsNull(result.Events[2].DeliveredAt);
+    }
+
+    [TestMethod]
+    public void MissingIdsDoNotMatchAnonymousDeliveries()
+    {
+        var user = Guid.NewGuid();
+        var document = Guid.NewGuid();
+        var start = DateTime.UtcNow;
+        var result = WorkStartEventMapper.Map(Guid.NewGuid(), new[]
+        {
+            Item(DocumentHistoryItemType.WorkStartedOnProject, start, user, Guid.Empty),
+            Item(DocumentHistoryItemType.WorkStartedOnProject, start, Guid.Empty, document),
+            Item(DocumentHistoryItemType.WorkStartedOnProject, start, Guid.Empty, Guid.Empty),
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddMinutes(1), user, Guid.Empty),
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddMinutes(1), Guid.Empty, document),
+            Item(DocumentHistoryItemType.DocumentDeliver, start.AddMinutes(1), Guid.Empty, Guid.Empty)
+        });
+        Assert.AreEqual(3, result.Count);
+        Assert.IsTrue(result.Events.All(item => item.DeliveredAt is null));
+    }
+
+    [TestMethod]
+    public void DeliveryAtSameRecordedTimestampCanMatch()
+    {
+        var user = Guid.NewGuid();
+        var document = Guid.NewGuid();
+        var start = DateTime.UtcNow;
+        var result = WorkStartEventMapper.Map(Guid.NewGuid(), new[]
+        {
+            Item(DocumentHistoryItemType.WorkStartedOnProject, start, user, document),
+            Item(DocumentHistoryItemType.DocumentDeliver, start, user, document)
+        });
+        Assert.AreEqual((DateTime?)start, result.Events[0].DeliveredAt);
     }
 
     private static DocumentHistoryItemInfo Item(DocumentHistoryItemType type, DateTime time, Guid user, Guid doc)

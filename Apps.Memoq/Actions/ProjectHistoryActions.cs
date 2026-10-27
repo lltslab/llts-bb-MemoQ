@@ -15,7 +15,7 @@ namespace Apps.Memoq.Actions;
 public class ProjectHistoryActions(InvocationContext invocationContext) : MemoqInvocable(invocationContext)
 {
     [Action("Get project work-start events",
-        Description = "Get recorded 'started working on project' history entries, with user IDs, documents and timestamps.")]
+        Description = "Get recorded work starts with the next delivery time for the same document and user.")]
     public async Task<WorkStartEventsResponse> GetWorkStartEvents(
         [ActionParameter] ProjectRequest project,
         [ActionParameter] WorkStartEventsRequest options)

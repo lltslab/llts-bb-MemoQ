@@ -28,6 +28,9 @@ public class WorkStartEvent
     [Display("Started at (as returned by memoQ)")]
     public DateTime StartedAt { get; set; }
 
+    [Display("Delivered time (as returned by memoQ)")]
+    public DateTime? DeliveredAt { get; set; }
+
     [Display("Event type")]
     public string EventType { get; set; } = "WorkStartedOnProject";
 }
