@@ -35,6 +35,27 @@ public class ProjectHistoryActions(InvocationContext invocationContext) : MemoqI
         return WorkStartEventMapper.Map(projectId, history, userId);
     }
 
+    [Action("Get project delivery events",
+        Description = "Get recorded 'delivered' document history entries, with user IDs, documents and delivery timestamps.")]
+    public async Task<DeliveryEventsResponse> GetDeliveryEvents(
+        [ActionParameter] ProjectRequest project,
+        [ActionParameter] DeliveryEventsRequest options)
+    {
+        var projectId = ParseNonEmptyGuid(project.ProjectGuid);
+        var documentIds = options.DocumentIds?.Select(ParseNonEmptyGuid).Distinct().ToArray();
+        Guid? userId = options.UserId is null ? null : ParseNonEmptyGuid(options.UserId);
+
+        // memoQ uses null for all documents. Treat an omitted or empty list identically.
+        var request = new DocumentHistoryRequest
+        {
+            DocumentGuids = documentIds is { Length: > 0 } ? documentIds : null!
+        };
+        var history = await ExecuteWithHandling(() =>
+            ProjectService.Service.GetDocumentHistoryAsync(projectId, request));
+
+        return DeliveryEventMapper.Map(projectId, history, userId);
+    }
+
     private static Guid ParseNonEmptyGuid(string value)
     {
         var guid = GuidExtensions.ParseWithErrorHandling(value);
